@@ -8,6 +8,11 @@ span{
   color: white;
 }
 
+button{
+  float: left;
+  margin: 5px;
+}
+
 .jumbotron {
     background-color:#337ab7 !important;
     color: white !important;
@@ -22,5 +27,8 @@ span{
     background-color: rgba(158, 158, 158, 0.26);
     padding: 10px;
     margin: 20px;
+}
 
+.media{
+  margin: 10px;
 }

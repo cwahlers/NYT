@@ -1,75 +1,103 @@
-// GifTastic Game
-// Variables
-var animals = ["dog","cat","bear","parrot","squirel"];
+var title =[];
+var startYear;
+var endYear;
+var numOfRecords = 0;
+var titleDiv;
+var question = "";
+var response = "";
+var startYr = "";
+var endYr = "";
+var url = "https://api.nytimes.com/svc/search/v2/articlesearch.json";
+var counter = 0;
 
-//***********************************************************************************
-// On load
-//***********************************************************************************
-for (var i = 0; i < animals.length; i++) {
-  var btnHtml = $('<button type="button"> ' + animals[i] +' </button>').addClass("btn").attr("data-btnvalue", animals[i]);
-  $(".btn-container").append(btnHtml);
-}
 
-//********************************************
-// Click event for animal buttons at top of page
-//********************************************
-$(document).on("click",".btn", function() {
-  $(".results").empty();
-  var btnValue = ($(this).data("btnvalue"));
-  console.log(btnValue);
-  // URL to be called from API
-  var queryURL = "https://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&q=" + btnValue + "&limit=10";
-  // API to GET data from queryURL
-  $.ajax({
-    url: queryURL,
-    method: "GET"
-  })
-  .done(function(response) {
-      console.log(response);
-      console.log(Object.keys(response.data).length);
-      for (var i = 0; i < Object.keys(response.data).length; i++) {
-        var imageDiv = $('<div class="imagediv">');
-        var urlStill = response.data[i].images.original_still.url;
-        var urlAnimate = response.data[i].images.original.url;
-        var image = $("<img>").addClass('image' + i).attr("src", urlStill).attr('data-imgnum', i).attr('data-otherurl', urlAnimate);
-        var rating = $("<p>").text("Rated: " + response.data[i].rating );
-        imageDiv.prepend(rating);
-        imageDiv.prepend(image);
-        $(".results").append(imageDiv);
-        //$(".results").append($("<img>").addClass('image' + i).attr("src", urlStill).attr('data-imgnum', i).attr('data-otherurl', urlAnimate));
-      }
+//*****************************************
+//  Search Button
+//*****************************************
+$("#search").on("click", function() {
+  question = $("#term-input").val().trim();
+  records = $("#records-input").val().trim();
+  startYr = $("#start-input").val().trim();
+  endYr = $("#end-input").val().trim();
+
+  // Base URL
+  url += '?' + $.param({
+  'api-key': "87aa1a53935e4b768f3d84b1ec41ad22",
+  'q': question,
+  'sort' : "newest"
   });
+
+  // Check if Start Year is populated
+  if (startYr != "" ) {
+    url += "&";
+    url += $.param({ 'begin_date' : (startYr + "0101") });
+  }
+
+  // Check if End Year is populated
+  if (endYr != "" ) {
+    url += "&";
+    url += $.param({ 'end_date' : (endYr + "1231") });
+  }
+
+  // NYT API Call
+  $.ajax({
+    url: url,
+    method: 'GET',
+  }).done(function(result) {
+    //console.log(result);
+    var articlesArray = result.response.docs;
+    var resultsContainer = $("<div>");
+    var title, snippetText, date, articleURL, multimediaArray, thumbnailURL;
+    //console.log(articlesArray);
+    console.log(articlesArray.length);
+    $(".list-group").empty();
+
+    if (records != "" && records <= articlesArray.length){
+      counter = records;
+    } else {
+      counter = articlesArray.length;
+    }
+
+    for(var i = 0; i < counter ; i++){
+       //set variables to API results
+        title = articlesArray[i].headline.main;
+        snippetText = articlesArray[i].snippet;
+        date = articlesArray[i].pub_date;
+        articleURL = articlesArray[i].web_url;
+        multimediaArray = articlesArray[i].multimedia;
+        
+        //testing for loop
+        //console.log(title + "\n " + snippetText + "\n " + date + "\n " + articleURL);
+        //var articleWrapper = $("<div>");
+        var articleWrapper = $("<li>").addClass("list-group-item");
+
+        var articleResults = $("<div>").addClass("media")
+                              .append( $("<button>").addClass("btn btn-primary").text(i + 1) )
+                              .append( $("<h4>").addClass("media-heading").text(title) )
+                              .append( $("<p>").addClass("media-object").text(snippetText) )
+                              .append( $("<p>").addClass("media-object").text(date) )
+                              .append( $("<a>").addClass("media-object").attr("href", articleURL)
+                              .html("<p>Read More</p>"));
+
+        articleWrapper.append(articleResults);
+        $('.list-group').append(articleWrapper);
+    }
+    
+
+  }).fail(function(err) {
+    throw err;
+  });
+  // Don't refresh the page!
+      return false;
 });
 
-//********************************************
-// Click event for image
-//********************************************
-$(document).on("click","img", function() {
-  //Get source and other URL and swap
-  var imgNum = $(this).data('imgnum');
-  var srcUrl = $(this).attr('src');
-  var otherUrl = $(this).attr('data-otherurl');
-  var imgObj = ".image" + imgNum;
-  $(this).attr("src", otherUrl).attr('data-otherurl', srcUrl);
-});
-//********************************************
-// Click event for search
-//********************************************
-$(document).on("click",".search", function() {
-  // Get input value
-  var btnValue = ($(".inputAnimal").val()).trim();
-  // Check if only space(s)
-  if (btnValue != "") {
-    // Check if button already exists
-    if (animals.indexOf(btnValue) < 0) {
-      // Add button to the screen
-      animals[animals.length] = btnValue;
-      var btnHtml = $('<button type="button"> ' + btnValue +' </button>').addClass("btn").attr("data-btnvalue", btnValue);
-      $(".btn-container").append(btnHtml);
-    }else{
-      alert(btnValue + ' already exists!');
-    }
-  }else{
-    alert('Enter an animal, then press submit');
-  }
-});
+//*****************************************
+//  Clear Button
+//*****************************************
+$("#clear").on("click", function() {
+  $(".list-group").empty();
+  console.log("emptied");
+  // Don't refresh the page!
+  return false;
+
+  });
